@@ -17,6 +17,7 @@ function create() {
 
     game.physics.startSystem(Phaser.Physics.ARCADE);
 
+    showStartButton();
     gameSet();
 
     //pointer
@@ -24,10 +25,18 @@ function create() {
 
     //scoreboard
     sb = game.add.text(game.world.width * 0.01,game.world.height * 0.01,"Gold: 0\n Red: 0", {fill: "#ffffff"});
+    ending = game.add.text(game.world.centerX,game.world.centerY,"", {fill: "#ffffff"});
+    ending.visible = false;
 
 }
 
 function update() {
+    // check game end
+    if (gold == 5 || red == 5){
+        gameEnd();
+        return;
+    }
+
     game.physics.arcade.collide(star, paddle, ballHitPaddle, null, this);
     game.physics.arcade.collide(star, enemy, ballHitPaddle, null, this);
     //game.physics.arcade.collide(enemy, paddle);
@@ -109,6 +118,13 @@ function followPoint(pointer) {
     }
 }
 
+function gameEnd(){
+    ending.visible = true;
+    ending.text = "Gold: "+gold+"\n Red: "+red;
+    ending.anchor.setTo(0.5, 1);
+    ending.bringToTop();
+}
+
 function gameSet(){
     //enemy
     enemy = game.add.sprite(Math.ceil(game.world.centerX), 80, 'enemy');
@@ -133,18 +149,19 @@ function gameSet(){
     //star.body.velocity.setTo(0, BALL_SPEED);
     star.body.collideWorldBounds = true;
     star.body.bounce.set(1);
+}
 
+function showStartButton(){
     //buttons
     replayBtn = game.add.text(game.world.centerX, game.world.centerY, "start", { font: "65px Arial", fill: "#ffffff", align: "center" });
     replayBtn.inputEnabled = true;
     replayBtn.events.onInputUp.add(startGame, this);
-    star.anchor.setTo(0.5, 0);
+    replayBtn.anchor.setTo(0.5, 0);
 }
 
 function startGame(){
     replayBtn.kill();
-    taa = game.time.events.add(Phaser.Timer.SECOND * 1, serveBall, this);
-    console.log("aaaaaa");
+    game.time.events.add(Phaser.Timer.SECOND * 1, serveBall, this);
 }
 
 function serveBall(){
@@ -158,5 +175,10 @@ function updatescore(){
     //score += 10;
     sb.text = "Gold: "+gold+"\n Red: "+red;
     gameSet();
+    // check game end
+    if (gold == 5 || red == 5){
+        gameEnd();
+    }
+    else game.time.events.add(Phaser.Timer.SECOND * 1, serveBall, this);
 }
 
