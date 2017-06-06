@@ -1,5 +1,5 @@
-//var game = new Phaser.Game(400, 300, Phaser.CANVAS, '', { preload: preload, create: create, update: update, render: render });
-var game = new Phaser.Game(window.innerWidth, window.innerHeight, Phaser.CANVAS, '', { preload: preload, create: create, update: update, render: render });
+var game = new Phaser.Game(500, 600, Phaser.CANVAS, '', { preload: preload, create: create, update: update, render: render });
+//var game = new Phaser.Game(window.innerWidth, window.innerHeight, Phaser.CANVAS, '', { preload: preload, create: create, update: update, render: render });
 
 var MOV_SPEED = 400;
 var BALL_SPEED = 550;
@@ -41,20 +41,18 @@ function update() {
     game.physics.arcade.collide(star, enemy, ballHitPaddle, null, this);
     //game.physics.arcade.collide(enemy, paddle);
     
-    // Right adjustments
-    var enemy_X_right = enemy.body.x+64;
-    var star_X_right = star.body.x+24;
-
     //enemy AI
-    //TODO: fix,nanginginig-nginig pa
-    game.physics.arcade.moveToXY(enemy, star.body.x , 80, MOV_SPEED);
-    // if enemy paddle overtakes the ball to the right or left, stop
-    if (enemy.body.x < star.body.x && (enemy_X_right) > star_X_right) {
-        enemy.body.velocity.setTo(0, 0); 
-    }
-
+    chaseMove(enemy, 80);
+    
     //paddle control
-    if(game.input.activePointer.isDown) {
+    if (updateCount == 8) {
+        //make AI do something
+        updateCount = 0;
+        playerMove(paddle, game.world.height - 80);
+    }
+    else updateCount++;
+    // DISABLED MUNA, AI TRAINING IN PROGRESS
+    /*if(game.input.activePointer.isDown) {
         game.physics.arcade.moveToXY(paddle, game.input.activePointer.x, game.world.height - 80, MOV_SPEED);
         if (Phaser.Rectangle.contains(paddle.body, game.input.activePointer.x, game.world.height - 80)) {
             paddle.body.velocity.setTo(0, 0);
@@ -62,7 +60,7 @@ function update() {
     }
     else {
         paddle.body.velocity.setTo(0, 0);
-    }
+    }*/
 
     //pointer
     if(star.body.y == 0 && star.alive) {
@@ -76,8 +74,8 @@ function update() {
 }
 
 function render() {
-    game.debug.spriteInfo(star, 32, 32);
-    game.debug.spriteInfo(enemy, 32, 132);
+    //game.debug.spriteInfo(star, 32, 32);
+    //game.debug.spriteInfo(enemy, 32, 132);
     game.debug.pointer( game.input.activePointer );
 }
 
@@ -86,29 +84,40 @@ function ballHitPaddle (_ball, _paddle) {
     var diff = 0;
     var ball_center = _ball.centerX;
     var paddle_center = _paddle.centerX;
+    console.log("diff:"+(ball_center-paddle_center)+" ballc:"+ball_center+" paddlec:"+paddle_center);
 
-    if (ball_center < paddle_center)
-    {
+    if (ball_center < paddle_center) {
         //  Ball is on the left-hand side of the paddle
         diff = paddle_center - ball_center;
         _ball.body.velocity.x = (-10 * diff);
-        console.log('hit on LEFT -> '+_ball.body.velocity.x);
+        //console.log('hit on LEFT -> '+_ball.body.velocity.x);
     }
-    else if (ball_center > paddle_center)
-    {
+    else if (ball_center > paddle_center) {
         //  Ball is on the right-hand side of the paddle
         diff = ball_center -paddle_center;
         _ball.body.velocity.x = (10 * diff);
-        console.log('hit on RIGHT -> '+_ball.body.velocity.x);
+        //console.log('hit on RIGHT -> '+_ball.body.velocity.x);
     }
-    else
-    {
+    else {
         //  Ball is perfectly in the middle
         //  Add a little random X to stop it bouncing straight up!
-        console.log('hit on CENTER');
+        //console.log('hit on CENTER');
         _ball.body.velocity.x = 2 + Math.random() * 8;
     }
+    console.log("x_velocity:"+_ball.body.velocity.x);
+}
 
+// make paddle chase the ball
+function chaseMove(player,yloc){
+    // Right adjustments
+    var player_X_right = player.body.x+64;
+    var star_X_right = star.body.x+24;
+    //TODO: fix,nanginginig-nginig pa
+    game.physics.arcade.moveToXY(player, star.body.x , yloc, MOV_SPEED);
+    // if enemy paddle overtakes the ball to the right or left, stop
+    if (player.body.x < star.body.x && player_X_right > star_X_right) {
+        player.body.velocity.setTo(0, 0); 
+    }
 }
 
 function followPoint(pointer) {
@@ -119,6 +128,7 @@ function followPoint(pointer) {
 }
 
 function gameEnd(){
+    console.log("END");
     ending.visible = true;
     ending.text = "Gold: "+gold+"\n Red: "+red;
     ending.anchor.setTo(0.5, 1);
@@ -141,6 +151,7 @@ function gameSet(){
     paddle.body.collideWorldBounds = true;
     paddle.body.checkCollision.down = false;
     paddle.body.immovable = true;
+    //paddle.scale.setTo(9,1);
 
     //ball
     star = game.add.sprite(game.world.centerX, game.world.centerY, 'star');
@@ -149,6 +160,29 @@ function gameSet(){
     //star.body.velocity.setTo(0, BALL_SPEED);
     star.body.collideWorldBounds = true;
     star.body.bounce.set(1);
+}
+
+function playerMove(player,yloc){
+    // Right adjustments
+    var player_X_right = player.body.x+64;
+    var star_X_right = star.body.x+24;
+    if (player_X_right > star_X_right) playerMoveL(player,yloc);
+    if (player.body.x < star.body.x) playerMoveR(player,yloc);
+    if (player.body.x < star.body.x && (player_X_right) > star_X_right) {
+        playerMoveStop(player);
+    }
+}
+
+function playerMoveL(player,yloc){
+    game.physics.arcade.moveToXY(player, 0, yloc, MOV_SPEED);
+}
+
+function playerMoveR(player,yloc){
+    game.physics.arcade.moveToXY(player, game.width-player.width, yloc, MOV_SPEED);
+}
+
+function playerMoveStop(player){
+    player.body.velocity.setTo(0, 0);
 }
 
 function showStartButton(){
@@ -165,10 +199,12 @@ function startGame(){
 }
 
 function serveBall(){
+    console.log("START");
     star.body.velocity.setTo(0, BALL_SPEED);
 }
 
 function updatescore(){
+    console.log("SET");
     star.kill();
     enemy.kill();
     paddle.kill();
