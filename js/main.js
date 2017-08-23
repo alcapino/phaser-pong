@@ -5,12 +5,22 @@ var MOV_SPEED = 400;
 var BALL_SPEED = 550;
 var gold =0;
 var red = 0;
+var updateCount = 0;
+var generation = 0;
+
+var moves = ["L","R","S"];
+var p;
+p = Population(clone(moves));
 
 function preload() {
     game.load.image('star','res/star.png');
     game.load.image('paddle','res/paddle.png');
     game.load.image('enemy','res/enemy.png');
-    
+}
+
+function clone(obj) {
+    obj = JSON.parse(JSON.stringify(obj));
+    return obj;
 }
 
 function create() {
@@ -27,7 +37,7 @@ function create() {
     sb = game.add.text(game.world.width * 0.01,game.world.height * 0.01,"Gold: 0\n Red: 0", {fill: "#ffffff"});
     ending = game.add.text(game.world.centerX,game.world.centerY,"", {fill: "#ffffff"});
     ending.visible = false;
-
+    
 }
 
 function update() {
@@ -38,12 +48,14 @@ function update() {
     }
 
     game.physics.arcade.collide(star, paddle, ballHitPaddle, null, this);
+    //game.physics.arcade.collide(star, paddle);
     game.physics.arcade.collide(star, enemy, ballHitPaddle, null, this);
     //game.physics.arcade.collide(enemy, paddle);
     
     //enemy AI
     chaseMove(enemy, 80);
     
+
     //paddle control
     if (updateCount == 8) {
         //make AI do something
@@ -105,6 +117,7 @@ function ballHitPaddle (_ball, _paddle) {
         _ball.body.velocity.x = 2 + Math.random() * 8;
     }
     console.log("x_velocity:"+_ball.body.velocity.x);
+
 }
 
 // make paddle chase the ball
@@ -118,6 +131,44 @@ function chaseMove(player,yloc){
     if (player.body.x < star.body.x && player_X_right > star_X_right) {
         player.body.velocity.setTo(0, 0); 
     }
+}
+
+function Chromosome(genes){
+    this.genes = genes;
+    this.fitness = 0;
+    this.members = [];
+    this.getFitness = function(){
+        //
+    };
+    
+    this.mutate = function(){
+        //
+    };
+
+}
+
+function Population(){
+    this.size = 50;
+    this.elements = [];
+    this.fill = function(){
+        //
+    };
+    this.kill = function(){
+        //
+    };
+    this.generate = function(){
+        this.sort();
+        this.kill();
+        this.mate();
+        this.fill();
+        this.sort();
+    };
+    this.mate = function(){
+        //
+    };
+    this.sort = function(){
+        //
+    };
 }
 
 function followPoint(pointer) {
@@ -160,6 +211,10 @@ function gameSet(){
     //star.body.velocity.setTo(0, BALL_SPEED);
     star.body.collideWorldBounds = true;
     star.body.bounce.set(1);
+
+    //
+    p = new Population();
+    p.fill();
 }
 
 function playerMove(player,yloc){
